@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosenbauer Recall Demo (Final)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rosenbauer-red: #E60000;
+            --rosenbauer-dark: #222222;
+            --rosenbauer-text: #333333;
+            --background-light: #f9f9f9;
+            --border-color: #e0e0e0;
+        }
+        body { font-family: 'Roboto', sans-serif; margin: 0; background-color: var(--background-light); color: var(--rosenbauer-text); }
+        .header { background-color: #ffffff; padding: 1rem 3rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .logo img { height: 30px; width: auto; display: block; }
+        .navigation { text-align: center; }
+        .navigation a { margin: 0 1.5rem; text-decoration: none; color: var(--rosenbauer-dark); font-weight: 700; }
+        .header-placeholder { width: 200px; }
+        .main-container { max-width: 900px; margin: 3rem auto; padding: 2rem; background-color: #ffffff; }
+        .language-switcher-container { text-align: left; margin-bottom: 1rem; }
+        .language-switcher a { color: #666; text-decoration: none; font-weight: 700; margin-right: 1rem; padding: 0.2rem 0.4rem; display: inline-flex; align-items: center; }
+        .language-switcher a.lang-active { color: var(--rosenbauer-red); border-bottom: 2px solid var(--rosenbauer-red); }
+        .language-switcher img { width: 20px; height: auto; margin-right: 6px; border: 1px solid #ccc; }
+        h1, h2 { font-weight: 900; color: #000; }
+        h1 { font-size: 2.5rem; margin-top: 0; }
+        h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .search-form { display: flex; margin-top: 1rem; }
+        #vin-input { flex-grow: 1; padding: 0.8rem; font-size: 1rem; border: 1px solid #ccc; border-right: none; }
+        #search-button, #reset-button { padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: bold; color: white; background-color: var(--rosenbauer-red); border: none; cursor: pointer; text-transform: uppercase; }
+        #error-message { color: var(--rosenbauer-red); font-weight: bold; height: 1em; margin-top: 0.5rem; }
+        .results-view { display: none; }
+        .vehicle-info-result { background-color: var(--background-light); padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--rosenbauer-red); }
+        .recall-card { border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .recall-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .recall-title { font-size: 1.25rem; font-weight: 700; color: #000; }
+        .status { padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.9rem; font-weight: bold; color: white; text-transform: uppercase; }
+        .status-open { background-color: var(--rosenbauer-red); }
+        .status-resolved { background-color: #28a745; }
+        .recall-details h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1rem; font-weight: 700; text-transform: uppercase; color: var(--rosenbauer-dark); }
+        .recall-details p { margin-top: 0; line-height: 1.6; }
+        .no-recalls-message { text-align: center; padding: 2rem; background-color: #eef7f0; border: 1px solid #28a745; color: #155724; }
+        #reset-button { margin-top: 1.5rem; background-color: var(--rosenbauer-dark); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="rosenbauer-logo-DPnbya0g.svg" alt="Rosenbauer Logo">
+        </div>
+        <nav class="navigation">
+            <a href="#" id="nav-products">Products</a>
+            <a href="#" id="nav-company">Company</a>
+            <a href="#" id="nav-careers">Careers</a>
+            <a href="#" id="nav-contact">Contact</a>
+        </nav>
+        <div class="header-placeholder"></div>
+    </div>
+    <div class="main-container">
+        <div class="language-switcher-container">
+            <div class="language-switcher">
+                <a href="#" id="lang-en" class="lang-active"><img src="usa.png" alt="USA Flag"> EN</a>
+                <a href="#" id="lang-fr"><img src="canada.png" alt="Canada Flag"> FR</a>
+            </div>
+        </div>
+        <div id="search-view">
+            <h1 id="main-title">SAFETY RECALLS AND SERVICE CAMPAIGNS</h1>
+            <p id="sub-title">Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.</p>
+            <form id="recall-form">
+                <div class="search-form">
+                    <input type="text" id="vin-input" placeholder="Enter your VIN">
+                    <button type="submit" id="search-button">Search</button>
+                </div>
+                <div id="error-message"></div>
+            </form>
+        </div>
+        <div id="results-view" class="results-view">
+            <h2 id="results-header">Recall Status</h2>
+            <div id="vehicle-info-result" class="vehicle-info-result"></div>
+            <div id="recall-list"></div>
+            <div id="no-recalls-message" class="no-recalls-message" style="display: none;"><p id="no-recalls-text">No open recalls found for this vehicle.</p></div>
+            <button id="reset-button">Search Another VIN</button>
+        </div>
+    </div>
+    <script>
+        let currentLang = 'en';
+        let lastSearchedVin = null;
+        const translations = { en: { mainTitle: "SAFETY RECALLS AND SERVICE CAMPAIGNS", subTitle: "Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.", searchButton: "Search", vinPlaceholder: "Enter your VIN", errorEnterVin: "Please enter a VIN.", resultsHeader: "Recall Status", vehicleInfoFor: "Vehicle Information for VIN:", vehicleNotFound: "Vehicle information not found.", modelLabel: "Model:", yearLabel: "Year:", noRecallsText: "No open recalls found for this vehicle.", resetButton: "Search Another VIN", descriptionHeader: "Description", remedyHeader: "Remedy", statusOpen: "OPEN", statusResolved: "RESOLVED", navProducts: "Products", navCompany: "Company", navCareers: "Careers", navContact: "Contact" }, fr: { mainTitle: "RAPPELS DE SÉCURITÉ ET CAMPAGNES DE SERVICE", subTitle: "Entrez votre numéro d'identification de véhicule (NIV) à 17 chiffres pour vérifier les rappels actifs.", searchButton: "Rechercher", vinPlaceholder: "Entrez votre NIV", errorEnterVin: "Veuillez entrer un NIV.", resultsHeader: "État des Rappels", vehicleInfoFor: "Informations sur le véhicule pour le NIV:", vehicleNotFound: "Informations sur le véhicule non trouvées.", modelLabel: "Modèle:", yearLabel: "Année:", noRecallsText: "Aucun rappel ouvert trouvé pour ce véhicule.", resetButton: "Rechercher un autre NIV", descriptionHeader: "Description", remedyHeader: "Remède", statusOpen: "OUVERT", statusResolved: "RÉSOLU", navProducts: "Produits", navCompany: "Société", navCareers: "Carrières", navContact: "Contact" } };
+        
+        const searchView = document.getElementById('search-view');
+        const resultsView = document.getElementById('results-view');
+        const recallForm = document.getElementById('recall-form');
+        const vinInput = document.getElementById('vin-input');
+        const errorMessage = document.getElementById('error-message');
+        const vehicleInfoDiv = document.getElementById('vehicle-info-result');
+        const recallListDiv = document.getElementById('recall-list');
+        const noRecallsDiv = document.getElementById('no-recalls-message');
+        const resetButton = document.getElementById('reset-button');
+        const langEn = document.getElementById('lang-en');
+        const langFr = document.getElementById('lang-fr');
+
+        recallForm.addEventListener('submit', handleSearch);
+        resetButton.addEventListener('click', resetView);
+        langEn.addEventListener('click', (e) => { e.preventDefault(); switchLanguage('en'); });
+        langFr.addEventListener('click', (e) => { e.preventDefault(); switchLanguage('fr'); });
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            langEn.classList.toggle('lang-active', lang === 'en');
+            langFr.classList.toggle('lang-active', lang === 'fr');
+            const t = translations[lang];
+            document.getElementById('main-title').textContent = t.mainTitle;
+            document.getElementById('sub-title').textContent = t.subTitle;
+            document.getElementById('search-button').textContent = t.searchButton;
+            vinInput.placeholder = t.vinPlaceholder;
+            document.getElementById('results-header').textContent = t.resultsHeader;
+            document.getElementById('no-recalls-text').textContent = t.noRecallsText;
+            resetButton.textContent = t.resetButton;
+            document.getElementById('nav-products').textContent = t.navProducts;
+            document.getElementById('nav-company').textContent = t.navCompany;
+            document.getElementById('nav-careers').textContent = t.navCareers;
+            document.getElementById('nav-contact').textContent = t.navContact;
+            if (resultsView.style.display === 'block' && lastSearchedVin) {
+                // Re-fetch and re-display data to get translated content if needed
+                handleSearch(new Event('submit')); 
+            }
+        }
+
+        async function handleSearch(event) {
+            event.preventDefault();
+            errorMessage.textContent = '';
+            const vin = vinInput.value.trim().toUpperCase();
+            lastSearchedVin = vin;
+            if (vin === '') {
+                errorMessage.textContent = translations[currentLang].errorEnterVin;
+                return;
+            }
+            const apiUrl = `https://rosenbauer-vin-recall-api-8da1727272c7.herokuapp.com/api/getRecallByVin?vin=${vin}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    displayResults(vin, null);
+                    return;
+                }
+                const data = await response.json();
+                displayResults(vin, data);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                errorMessage.textContent = 'An error occurred while fetching data.';
+            }
+        }
+
+        function displayResults(vin, data) {
+            searchView.style.display = 'none';
+            resultsView.style.display = 'block';
+            const t = translations[currentLang];
+            if (!data) {
+                vehicleInfoDiv.innerHTML = `<h3>${t.vehicleInfoFor} ${vin}</h3><p>${t.vehicleNotFound}</p>`;
+                recallListDiv.innerHTML = '';
+                noRecallsDiv.style.display = 'block';
+                return;
+            }
+            vehicleInfoDiv.innerHTML = `<h3>${t.vehicleInfoFor} ${vin}</h3><p><strong>${t.modelLabel}</strong> ${data.vehicle.makeModel}<br><strong>${t.yearLabel}</strong> ${data.vehicle.year}</p>`;
+            if (data.recalls.length === 0) {
+                recallListDiv.innerHTML = '';
+                noRecallsDiv.style.display = 'block';
+            } else {
+                recallListDiv.innerHTML = data.recalls.map(recall => {
+                    const statusText = recall.status === 'OPEN' ? t.statusOpen : t.statusResolved;
+                    return `
+                    <div class="recall-card">
+                        <div class="recall-header">
+                            <span class="recall-title">${recall.recallNumber}</span>
+                            <span class="status ${recall.status === 'OPEN' ? 'status-open' : 'status-resolved'}">${statusText}</span>
+                        </div>
+                        <div class="recall-details">
+                            <h3>${t.descriptionHeader}</h3><p>${recall.description || 'N/A'}</p>
+                            <h3>${t.remedyHeader}</h3><p>${recall.remedy || 'N/A'}</p>
+                        </div>
+                    </div>`
+                }).join('');
+                noRecallsDiv.style.display = 'none';
+            }
+        }
+
+        function resetView() {
+            resultsView.style.display = 'none';
+            searchView.style.display = 'block';
+            vinInput.value = '';
+            errorMessage.textContent = '';
+            lastSearchedVin = null;
+        }
+        
+        switchLanguage(currentLang);
+    </script>
+</body>
+</html>
