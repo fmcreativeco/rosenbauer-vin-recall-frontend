@@ -16,7 +16,7 @@
             --background-light: #f9f9f9;
             --border-color: #e0e0e0;
         }
-        body { font-family: 'Roboto', sans-serif; margin: 0; background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('Stock Truck (Large)@2x.cf7e49d5-optimized.webp') no-repeat center center fixed; background-size: cover; color: var(--rosenbauer-text); }
+        body { font-family: 'Roboto', sans-serif; margin: 0; background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('Stock Truck (Large)@2x.cf7e49d5-optimized.webp') no-repeat center center fixed; background-size: cover; color: var(--rosenbauer-text); }
         .header { background-color: #ffffff; padding: 1rem 3rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .logo img { height: 30px; width: auto; display: block; }
         .navigation { text-align: center; }
@@ -135,12 +135,13 @@
             <div id="recall-list"></div>
             <div id="no-recalls-message" class="no-recalls-message" style="display: none;"><p id="no-recalls-text">No open recalls found for this vehicle.</p></div>
             <button id="reset-button">Search Another VIN</button>
+            <div id="contact-message" style="margin-top: 2rem; text-align: center; font-weight: bold;"></div>
         </div>
     </div>
     <script>
         let currentLang = 'en';
         let lastSearchedVin = null;
-        const translations = { en: { mainTitle: "SAFETY RECALLS AND SERVICE CAMPAIGNS", subTitle: "Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.", searchButton: "Search", vinPlaceholder: "Enter your VIN", errorEnterVin: "Please enter a VIN.", loadingMessage: "Retrieving vehicle information...", resultsHeader: "Recall Status", vehicleInfoFor: "Vehicle Information for VIN:", vehicleNotFound: "Vehicle information not found.", modelLabel: "Model:", yearLabel: "Year:", noRecallsText: "No open recalls found for this vehicle.", resetButton: "Search Another VIN", descriptionHeader: "Description", remedyHeader: "Remedy", statusOpen: "OPEN", statusResolved: "RESOLVED", navProducts: "Products", navCompany: "Company", navNews: "News", navCareers: "Careers", navContact: "Contact" }, fr: { mainTitle: "RAPPELS DE SÉCURITÉ ET CAMPAGNES DE SERVICE", subTitle: "Entrez votre numéro d'identification de véhicule (NIV) à 17 chiffres pour vérifier les rappels actifs.", searchButton: "Rechercher", vinPlaceholder: "Entrez votre NIV", errorEnterVin: "Veuillez entrer un NIV.", loadingMessage: "Récupération des informations sur le véhicule...", resultsHeader: "État des Rappels", vehicleInfoFor: "Informations sur le véhicule pour le NIV:", vehicleNotFound: "Informations sur le véhicule non trouvées.", modelLabel: "Modèle:", yearLabel: "Année:", noRecallsText: "Aucun rappel ouvert trouvé pour ce véhicule.", resetButton: "Rechercher un autre NIV", descriptionHeader: "Description", remedyHeader: "Remède", statusOpen: "OUVERT", statusResolved: "RÉSOLU", navProducts: "Produits", navCompany: "Société", navNews: "Nouvelles", navCareers: "Carrières", navContact: "Contact" } };
+        const translations = { en: { mainTitle: "SAFETY RECALLS AND SERVICE CAMPAIGNS", subTitle: "Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.", searchButton: "Search", vinPlaceholder: "Enter your VIN", errorEnterVin: "Please enter a VIN.", loadingMessage: "Retrieving vehicle information...", resultsHeader: "Recall Status", vehicleInfoFor: "Vehicle Information for VIN:", vehicleNotFound: "Vehicle information not found.", modelLabel: "Model:", yearLabel: "Year:", noRecallsText: "No open recalls found for this vehicle.", resetButton: "Search Another VIN", descriptionHeader: "Description", remedyHeader: "Remedy", statusOpen: "OPEN", statusResolved: "RESOLVED", navProducts: "Products", navCompany: "Company", navNews: "News", navCareers: "Careers", navContact: "Contact", contactMessage: "Please contact recalls@rosenbaueramerica.com to report any potential problems or to ask questions regarding open recalls." }, fr: { mainTitle: "RAPPELS DE SÉCURITÉ ET CAMPAGNES DE SERVICE", subTitle: "Entrez votre numéro d'identification de véhicule (NIV) à 17 chiffres pour vérifier les rappels actifs.", searchButton: "Rechercher", vinPlaceholder: "Entrez votre NIV", errorEnterVin: "Veuillez entrer un NIV.", loadingMessage: "Récupération des informations sur le véhicule...", resultsHeader: "État des Rappels", vehicleInfoFor: "Informations sur le véhicule pour le NIV:", vehicleNotFound: "Informations sur le véhicule non trouvées.", modelLabel: "Modèle:", yearLabel: "Année:", noRecallsText: "Aucun rappel ouvert trouvé pour ce véhicule.", resetButton: "Rechercher un autre NIV", descriptionHeader: "Description", remedyHeader: "Remède", statusOpen: "OUVERT", statusResolved: "RÉSOLU", navProducts: "Produits", navCompany: "Société", navNews: "Nouvelles", navCareers: "Carrières", navContact: "Contact", contactMessage: "Veuillez contacter recalls@rosenbaueramerica.com pour signaler tout problème potentiel ou pour poser des questions concernant les rappels ouverts." } };
         
         const loginOverlay = document.getElementById('login-overlay');
         const loginForm = document.getElementById('login-form');
@@ -158,6 +159,7 @@
         const recallListDiv = document.getElementById('recall-list');
         const noRecallsDiv = document.getElementById('no-recalls-message');
         const resetButton = document.getElementById('reset-button');
+        const contactMessageDiv = document.getElementById('contact-message');
         const langEn = document.getElementById('lang-en');
         const langFr = document.getElementById('lang-fr');
 
@@ -201,6 +203,9 @@
             if (loadingMessage.style.display === 'block') {
                 loadingMessage.textContent = t.loadingMessage;
             }
+            if (resultsView.style.display === 'block') {
+                contactMessageDiv.textContent = t.contactMessage;
+            }
             if (resultsView.style.display === 'block' && lastSearchedVin) {
                 // Re-fetch and re-display data to get translated content if needed
                 handleSearch(new Event('submit'));
@@ -240,6 +245,7 @@
             searchView.style.display = 'none';
             resultsView.style.display = 'block';
             const t = translations[currentLang];
+            contactMessageDiv.textContent = t.contactMessage;
             if (!data) {
                 vehicleInfoDiv.innerHTML = `<h3>${t.vehicleInfoFor} ${vin}</h3><p>${t.vehicleNotFound}</p>`;
                 recallListDiv.innerHTML = '';
