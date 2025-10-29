@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rosenbauer Recall Demo (Final)</title>
+    <meta name="description" content="Check for active safety recalls and service campaigns on Rosenbauer America vehicles by entering your 17-digit Vehicle Identification Number (VIN).">
+    <title>Rosenbauer America Recall Information VIN Lookup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
@@ -45,26 +46,74 @@
         .recall-details p { margin-top: 0; line-height: 1.6; }
         .no-recalls-message { text-align: center; padding: 2rem; background-color: #eef7f0; border: 1px solid #28a745; color: #155724; }
         #reset-button { margin-top: 1.5rem; background-color: var(--rosenbauer-dark); }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-overlay form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .login-overlay input {
+            display: block;
+            width: 100%;
+            margin: 0.5rem 0;
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-overlay button {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--rosenbauer-red);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .main-container, .header { display: none; }
     </style>
 </head>
 <body>
+    <div id="login-overlay" class="login-overlay">
+        <form id="login-form">
+            <h2>Login Required</h2>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <div id="login-error" style="color: red; margin-top: 0.5rem;"></div>
+        </form>
+    </div>
     <div class="header">
         <div class="logo">
             <img src="rosenbauer-logo-DPnbya0g.svg" alt="Rosenbauer Logo">
         </div>
         <nav class="navigation">
-            <a href="#" id="nav-products">Products</a>
-            <a href="#" id="nav-company">Company</a>
-            <a href="#" id="nav-careers">Careers</a>
-            <a href="#" id="nav-contact">Contact</a>
+            <a href="https://www.rosenbauer.com/en-us/products" id="nav-products">Products</a>
+            <a href="https://www.rosenbauer.com/en-us/company" id="nav-company">Company</a>
+            <a href="https://www.rosenbauer.com/en-us/news" id="nav-news">News</a>
+            <a href="https://www.buildfiretrucks.com/" id="nav-careers">Careers</a>
+            <a href="https://www.rosenbauer.com/en-us/contact" id="nav-contact">Contact</a>
         </nav>
         <div class="header-placeholder"></div>
     </div>
     <div class="main-container">
         <div class="language-switcher-container">
             <div class="language-switcher">
-                <a href="#" id="lang-en" class="lang-active"><img src="usa.png" alt="USA Flag"> EN</a>
-                <a href="#" id="lang-fr"><img src="canada.png" alt="Canada Flag"> FR</a>
+                <a href="#" id="lang-en" class="lang-active"><img src="https://flagcdn.com/w20/us.png" alt="USA Flag"> EN</a>
+                <a href="#" id="lang-fr"><img src="https://flagcdn.com/w20/ca.png" alt="Canada Flag"> FR</a>
             </div>
         </div>
         <div id="search-view">
@@ -89,7 +138,13 @@
     <script>
         let currentLang = 'en';
         let lastSearchedVin = null;
-        const translations = { en: { mainTitle: "SAFETY RECALLS AND SERVICE CAMPAIGNS", subTitle: "Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.", searchButton: "Search", vinPlaceholder: "Enter your VIN", errorEnterVin: "Please enter a VIN.", resultsHeader: "Recall Status", vehicleInfoFor: "Vehicle Information for VIN:", vehicleNotFound: "Vehicle information not found.", modelLabel: "Model:", yearLabel: "Year:", noRecallsText: "No open recalls found for this vehicle.", resetButton: "Search Another VIN", descriptionHeader: "Description", remedyHeader: "Remedy", statusOpen: "OPEN", statusResolved: "RESOLVED", navProducts: "Products", navCompany: "Company", navCareers: "Careers", navContact: "Contact" }, fr: { mainTitle: "RAPPELS DE SÉCURITÉ ET CAMPAGNES DE SERVICE", subTitle: "Entrez votre numéro d'identification de véhicule (NIV) à 17 chiffres pour vérifier les rappels actifs.", searchButton: "Rechercher", vinPlaceholder: "Entrez votre NIV", errorEnterVin: "Veuillez entrer un NIV.", resultsHeader: "État des Rappels", vehicleInfoFor: "Informations sur le véhicule pour le NIV:", vehicleNotFound: "Informations sur le véhicule non trouvées.", modelLabel: "Modèle:", yearLabel: "Année:", noRecallsText: "Aucun rappel ouvert trouvé pour ce véhicule.", resetButton: "Rechercher un autre NIV", descriptionHeader: "Description", remedyHeader: "Remède", statusOpen: "OUVERT", statusResolved: "RÉSOLU", navProducts: "Produits", navCompany: "Société", navCareers: "Carrières", navContact: "Contact" } };
+        const translations = { en: { mainTitle: "SAFETY RECALLS AND SERVICE CAMPAIGNS", subTitle: "Enter your 17-digit Vehicle Identification Number (VIN) to check for active recalls.", searchButton: "Search", vinPlaceholder: "Enter your VIN", errorEnterVin: "Please enter a VIN.", resultsHeader: "Recall Status", vehicleInfoFor: "Vehicle Information for VIN:", vehicleNotFound: "Vehicle information not found.", modelLabel: "Model:", yearLabel: "Year:", noRecallsText: "No open recalls found for this vehicle.", resetButton: "Search Another VIN", descriptionHeader: "Description", remedyHeader: "Remedy", statusOpen: "OPEN", statusResolved: "RESOLVED", navProducts: "Products", navCompany: "Company", navNews: "News", navCareers: "Careers", navContact: "Contact" }, fr: { mainTitle: "RAPPELS DE SÉCURITÉ ET CAMPAGNES DE SERVICE", subTitle: "Entrez votre numéro d'identification de véhicule (NIV) à 17 chiffres pour vérifier les rappels actifs.", searchButton: "Rechercher", vinPlaceholder: "Entrez votre NIV", errorEnterVin: "Veuillez entrer un NIV.", resultsHeader: "État des Rappels", vehicleInfoFor: "Informations sur le véhicule pour le NIV:", vehicleNotFound: "Informations sur le véhicule non trouvées.", modelLabel: "Modèle:", yearLabel: "Année:", noRecallsText: "Aucun rappel ouvert trouvé pour ce véhicule.", resetButton: "Rechercher un autre NIV", descriptionHeader: "Description", remedyHeader: "Remède", statusOpen: "OUVERT", statusResolved: "RÉSOLU", navProducts: "Produits", navCompany: "Société", navNews: "Nouvelles", navCareers: "Carrières", navContact: "Contact" } };
+        
+        const loginOverlay = document.getElementById('login-overlay');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const header = document.querySelector('.header');
+        const mainContainer = document.querySelector('.main-container');
         
         const searchView = document.getElementById('search-view');
         const resultsView = document.getElementById('results-view');
@@ -103,10 +158,25 @@
         const langEn = document.getElementById('lang-en');
         const langFr = document.getElementById('lang-fr');
 
+        loginForm.addEventListener('submit', handleLogin);
         recallForm.addEventListener('submit', handleSearch);
         resetButton.addEventListener('click', resetView);
         langEn.addEventListener('click', (e) => { e.preventDefault(); switchLanguage('en'); });
         langFr.addEventListener('click', (e) => { e.preventDefault(); switchLanguage('fr'); });
+        
+        function handleLogin(event) {
+            event.preventDefault();
+            loginError.textContent = '';
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (username === 'RBA_Review_Team' && password === 'jEOy56!l8o6azzBO') {
+                loginOverlay.style.display = 'none';
+                header.style.display = 'flex';
+                mainContainer.style.display = 'block';
+            } else {
+                loginError.textContent = 'Invalid username or password.';
+            }
+        }
 
         function switchLanguage(lang) {
             currentLang = lang;
@@ -122,6 +192,7 @@
             resetButton.textContent = t.resetButton;
             document.getElementById('nav-products').textContent = t.navProducts;
             document.getElementById('nav-company').textContent = t.navCompany;
+            document.getElementById('nav-news').textContent = t.navNews;
             document.getElementById('nav-careers').textContent = t.navCareers;
             document.getElementById('nav-contact').textContent = t.navContact;
             if (resultsView.style.display === 'block' && lastSearchedVin) {
